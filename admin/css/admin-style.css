@@ -1,0 +1,66 @@
+body {
+	background-color: #f8f9fa;
+}
+
+.admin-wrapper {
+	display: flex;
+	min-height: 100vh;
+}
+
+.sidebar {
+	width: 250px;
+	flex-shrink: 0;
+	background-color: #343a40;
+	color: #fff;
+}
+
+.sidebar .logo {
+	padding: 1.5rem 1rem;
+	font-size: 1.8rem;
+	font-weight: 700;
+	color: #fff;
+	text-align: center;
+	border-bottom: 1px solid #495057;
+}
+
+.sidebar-nav {
+	padding: 1rem 0;
+}
+
+.sidebar-nav a {
+	display: block;
+	padding: 0.75rem 1.5rem;
+	color: rgba(255, 255, 255, 0.8);
+	text-decoration: none;
+	transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+	background-color: #007bff;
+	color: #fff;
+}
+
+.sidebar-nav a i {
+	margin-right: 10px;
+	width: 20px;
+}
+
+.main-content {
+	flex-grow: 1;
+	padding: 2rem;
+}
+
+.main-content .card {
+	border-radius: 0.75rem;
+	border: none;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.main-header {
+	display: none;
+}
+
+.d-flex {
+	display: flex;
+}
