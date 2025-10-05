@@ -1,3 +1,50 @@
+<?php
+$pageTitle = "My Dashboard";
+require 'includes/header.php';
+require_once 'includes/functions.php';
+
+
+require_login();
+
+
+require 'config/database.php';
+
+
+$flash_message = $_SESSION['flash_message'] ?? null;
+$flash_class = $_SESSION['flash_class'] ?? '';
+if ($flash_message) {
+    unset($_SESSION['flash_message']);
+    unset($_SESSION['flash_class']);
+}
+
+
+
+$user_id = $_SESSION['user_id'];
+$sql_user = "SELECT username, registration_date FROM users WHERE user_id = ?";
+$stmt_user = $conn->prepare($sql_user);
+$stmt_user->bind_param("i", $user_id);
+$stmt_user->execute();
+$user = $stmt_user->get_result()->fetch_assoc();
+
+
+$sql_courses = "SELECT 
+                    c.course_id, 
+                    c.course_title, 
+                    c.course_thumbnail, 
+                    c.category, 
+                    e.progress,
+                    instructor.username AS instructor_name
+                FROM enrollments AS e
+                INNER JOIN courses AS c ON e.course_id = c.course_id
+                INNER JOIN users AS instructor ON c.instructor_id = instructor.user_id
+                WHERE e.student_id = ?";
+$stmt_courses = $conn->prepare($sql_courses);
+$stmt_courses->bind_param("i", $user_id);
+$stmt_courses->execute();
+$enrolled_courses = $stmt_courses->get_result()->fetch_all(MYSQLI_ASSOC);
+
+?>
+
 <div class="profile-section bg-light">
     <div class="container py-5">
         <div class="row justify-content-center">
