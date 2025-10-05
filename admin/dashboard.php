@@ -1,37 +1,3 @@
-<?php
-$pageTitle = "Admin Dashboard";
-require 'includes/header.php';
-require 'includes/auth-check.php';
-require '../config/database.php';
-
-
-$total_users_result = $conn->query("SELECT COUNT(*) AS total FROM users WHERE role IN ('student', 'instructor')");
-$total_users = $total_users_result->fetch_assoc()['total'];
-
-$total_courses_result = $conn->query("SELECT COUNT(*) AS total FROM courses");
-$total_courses = $total_courses_result->fetch_assoc()['total'];
-
-$total_enrollments_result = $conn->query("SELECT COUNT(*) AS total FROM enrollments");
-$total_enrollments = $total_enrollments_result->fetch_assoc()['total'];
-
-$new_users_result = $conn->query("SELECT COUNT(*) AS total FROM users WHERE registration_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
-$new_users = $new_users_result->fetch_assoc()['total'];
-
-
-$recent_users_result = $conn->query("SELECT username, email, registration_date FROM users WHERE role IN ('student', 'instructor') ORDER BY registration_date DESC LIMIT 5");
-$recent_users = $recent_users_result->fetch_all(MYSQLI_ASSOC);
-
-$recent_enrollments_sql = "
-    SELECT u.username, c.course_title, e.enrollment_date
-    FROM enrollments e
-    JOIN users u ON e.student_id = u.user_id
-    JOIN courses c ON e.course_id = c.course_id
-    ORDER BY e.enrollment_date DESC
-    LIMIT 5";
-$recent_enrollments_result = $conn->query($recent_enrollments_sql);
-$recent_enrollments = $recent_enrollments_result->fetch_all(MYSQLI_ASSOC);
-?>
-
 <div class="container-fluid">
 
   <!-- Page Heading -->
