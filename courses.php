@@ -1,3 +1,22 @@
+<<<<<<< HEAD
+=======
+<?php
+$pageTitle = "Our Courses";
+require 'includes/header.php';
+require 'config/database.php';
+
+
+$search_term = $_GET['search'] ?? '';
+$sql = "SELECT c.*, u.username as instructor_name 
+        FROM courses c 
+        JOIN users u ON c.instructor_id = u.user_id";
+
+if (!empty($search_term)) {
+    $sql .= " WHERE c.course_title LIKE ? OR c.course_description LIKE ?";
+}
+?>
+
+>>>>>>> fad82c75e07657c92ddbab09be6b2f6a24fa8000
 <!-- Section: Page Header -->
 <section class="page-header text-center py-5 bg-light">
     <div class="container">
