@@ -189,7 +189,7 @@ $recent_enrollments = $recent_enrollments_result->fetch_all(MYSQLI_ASSOC);
     margin-bottom: 0;
   }
 </style>
-<!--complete footer -->
+
 <?php
 $conn->close();
 require 'includes/footer.php';
