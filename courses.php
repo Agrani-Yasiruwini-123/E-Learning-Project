@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 <?php
 $pageTitle = "Our Courses";
 require 'includes/header.php';
@@ -16,7 +14,6 @@ if (!empty($search_term)) {
 }
 ?>
 
->>>>>>> fad82c75e07657c92ddbab09be6b2f6a24fa8000
 <!-- Section: Page Header -->
 <section class="page-header text-center py-5 bg-light">
     <div class="container">
