@@ -26,7 +26,7 @@ $recent_enrollments_sql = "
     FROM enrollments e
     JOIN users u ON e.student_id = u.user_id
     JOIN courses c ON e.course_id = c.course_id
-    ORDER BY e.enrollment_date DESC
+    ORDER BY e.enrollment_date DESC   
     LIMIT 5";
 $recent_enrollments_result = $conn->query($recent_enrollments_sql);
 $recent_enrollments = $recent_enrollments_result->fetch_all(MYSQLI_ASSOC);
@@ -189,7 +189,7 @@ $recent_enrollments = $recent_enrollments_result->fetch_all(MYSQLI_ASSOC);
     margin-bottom: 0;
   }
 </style>
-
+<!--complete footer -->
 <?php
 $conn->close();
 require 'includes/footer.php';
