@@ -1,6 +1,7 @@
 <?php
 $pageTitle = "Home";
 require 'includes/header.php';
+//phase 3 done
 ?>
 
 <!-- Section 1: Hero -->
