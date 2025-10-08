@@ -1,3 +1,50 @@
+<?php
+$pageTitle = "Delete Account";
+require 'includes/header.php';
+require_once 'includes/functions.php';
+require 'config/database.php';
+
+require_login();
+
+$error_message = '';
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $password = $_POST['password'] ?? '';
+    if (empty($password)) {
+        $error_message = 'Password is required to delete your account.';
+    } else {
+
+        $user_id = $_SESSION['user_id'];
+        $sql = "SELECT password FROM users WHERE user_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            if (password_verify($password, $row['password'])) {
+
+                $sql = "DELETE FROM users WHERE user_id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $user_id);
+                if ($stmt->execute()) {
+
+                    session_destroy();
+                    header("Location: index.php");
+                    exit();
+                } else {
+                    $error_message = 'Error deleting account: ' . $stmt->error;
+                }
+            } else {
+                $error_message = 'Incorrect password. Account not deleted.';
+            }
+        } else {
+            $error_message = 'User not found.';
+        }
+    }
+}
+?>
+
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-6">
