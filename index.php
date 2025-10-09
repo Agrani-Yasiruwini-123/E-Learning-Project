@@ -1,47 +1,52 @@
 <?php
 $pageTitle = "Home";
 require 'includes/header.php';
-//phase 3 done
 ?>
 
 <!-- Section 1: Hero -->
-<section class="hero-section text-white text-center">
+<section class="hero-section text-white text-center d-flex align-items-center" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('assets/images/hero-bg.jpg') center/cover no-repeat; min-height: 90vh;">
     <div class="container">
-        <h1 class="display-4 fw-bold">Unlock Your Potential</h1>
-        <p class="lead my-4">Join thousands of learners and gain new skills with expert-led courses.</p>
-        <a href="courses.php" class="btn btn-primary btn-lg">Explore Courses</a>
-        <a href="#features" class="btn btn-outline-light btn-lg">Learn More</a>
+        <h1 class="display-3 fw-bold mb-3">Discover Your Future</h1>
+        <p class="lead mb-4">Empower your career with in-demand skills taught by top instructors.</p>
+        <a href="courses.php" class="btn btn-teal btn-lg me-2">Browse Courses</a>
+        <a href="#features" class="btn btn-outline-light btn-lg">How It Works</a>
     </div>
 </section>
 
 <!-- Section 2: Features/Benefits -->
-<section id="features" class="py-5">
+<section id="features" class="py-5 bg-white">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="fw-bold">Why Choose EDUMA?</h2>
-            <p class="lead text-muted">We provide the best learning experience for you.</p>
+            <h2 class="fw-bold">Why Learn with EDUMA?</h2>
+            <p class="text-muted">We blend flexibility with quality to bring you the best online learning experience.</p>
         </div>
-        <div class="row text-center">
-            <div class="col-md-4 mb-4">
-                <div class="feature-icon bg-primary text-white mb-3">
-                    <i class="fas fa-video"></i>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow h-100 text-center p-4">
+                    <div class="mb-3 text-teal fs-2">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h5>Expert-Led Content</h5>
+                    <p class="text-muted">Courses crafted and delivered by professionals at the top of their fields.</p>
                 </div>
-                <h3 class="h5">Expert-Led Courses</h3>
-                <p class="text-muted">Learn from industry professionals with real-world experience.</p>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-icon bg-primary text-white mb-3">
-                    <i class="fas fa-infinity"></i>
+            <div class="col-md-4">
+                <div class="card border-0 shadow h-100 text-center p-4">
+                    <div class="mb-3 text-teal fs-2">
+                        <i class="fas fa-unlock-alt"></i>
+                    </div>
+                    <h5>Unlimited Access</h5>
+                    <p class="text-muted">Get lifetime access to all your enrolled courses and updates.</p>
                 </div>
-                <h3 class="h5">Lifetime Access</h3>
-                <p class="text-muted">Enroll once and get unlimited lifetime access to course materials.</p>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="feature-icon bg-primary text-white mb-3">
-                    <i class="fas fa-mobile-alt"></i>
+            <div class="col-md-4">
+                <div class="card border-0 shadow h-100 text-center p-4">
+                    <div class="mb-3 text-teal fs-2">
+                        <i class="fas fa-laptop-code"></i>
+                    </div>
+                    <h5>Anytime, Anywhere</h5>
+                    <p class="text-muted">Study at your own pace on any device — mobile, tablet, or desktop.</p>
                 </div>
-                <h3 class="h5">Learn Anywhere</h3>
-                <p class="text-muted">Access your courses on any device, anytime, anywhere.</p>
             </div>
         </div>
     </div>
@@ -50,9 +55,12 @@ require 'includes/header.php';
 <!-- Section 3: Featured Courses -->
 <section class="py-5 bg-light">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">Explore Our Featured Courses</h2>
-            <p class="lead text-muted">Handpicked courses to kickstart your learning journey.</p>
+        <div class="text-center mb-4">
+            <h2 class="fw-bold">Featured Courses</h2>
+            <p class="text-muted">Our top picks to help you get started.</p>
+        </div>
+        <div class="text-center">
+            <a href="courses.php" class="btn btn-teal btn-lg">Start Learning Now</a>
         </div>
     </div>
 </section>
