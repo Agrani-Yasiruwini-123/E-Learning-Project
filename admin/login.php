@@ -1,3 +1,49 @@
+<?php
+
+require_once '../includes/session-manager.php';
+require_once '../config/database.php';
+
+$pageTitle = "Admin Login";
+
+
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] == 'admin') {
+  header("Location: dashboard.php");
+  exit();
+}
+
+$error_message = '';
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  $email = $_POST['email'] ?? '';
+  $password = $_POST['password'] ?? '';
+
+  if (empty($email) || empty($password)) {
+    $error_message = "Email and password are required.";
+  } else {
+    $sql = "SELECT user_id, username, password FROM users WHERE email = ? AND role = 'admin'";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+      $admin = $result->fetch_assoc();
+      if (password_verify($password, $admin['password'])) {
+        $_SESSION['user_id'] = $admin['user_id'];
+        $_SESSION['username'] = $admin['username'];
+        $_SESSION['role'] = 'admin';
+        header("Location: dashboard.php");
+        exit();
+      } else {
+        $error_message = "Invalid credentials. Please try again.";
+      }
+    } else {
+      $error_message = "Invalid credentials or you are not an administrator.";
+    }
+    $stmt->close();
+    $conn->close();
+  }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,7 +53,7 @@
   <title><?php echo htmlspecialchars($pageTitle); ?> | EDUMA</title>
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
-<!-- body with login form -->
+
 <body>
   <main>
     <div class="auth-section">
