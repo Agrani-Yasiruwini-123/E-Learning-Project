@@ -1,70 +1,18 @@
-<?php
-$pageTitle = "Course Overview";
-require 'includes/header.php';
-require 'config/database.php';
-
-$course_id = $_GET['id'] ?? 0;
-
-if ($course_id == 0) {
-}
-
-
-$sql = "SELECT c.*, u.username AS instructor_name, 
-        (SELECT COUNT(*) FROM enrollments WHERE course_id = c.course_id) as enrollment_count
-        FROM courses c 
-        JOIN users u ON c.instructor_id = u.user_id 
-        WHERE c.course_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $course_id);
-$stmt->execute();
-$course = $stmt->get_result()->fetch_assoc();
-
-if (!$course) {
-}
-
-$stmt_content = $conn->prepare("SELECT content_title, content_type FROM course_content WHERE course_id = ? ORDER BY order_in_course");
-$stmt_content->bind_param("i", $course_id);
-$stmt_content->execute();
-$curriculum = $stmt_content->get_result()->fetch_all(MYSQLI_ASSOC);
-
-
-$is_enrolled = false;
-if (isset($_SESSION['user_id'])) {
-    $stmt_check = $conn->prepare("SELECT 1 FROM enrollments WHERE student_id = ? AND course_id = ?");
-    $stmt_check->bind_param("ii", $_SESSION['user_id'], $course_id);
-    $stmt_check->execute();
-    $is_enrolled = $stmt_check->get_result()->num_rows > 0;
-    $stmt_check->close();
-}
-
-$what_you_will_learn = [
-    "Master the core concepts of " . htmlspecialchars($course['category']),
-    "Build real-world projects from scratch",
-    "Understand industry best practices",
-    "Gain confidence to advance your career"
-];
-
-$video_count = count(array_filter($curriculum, fn($item) => $item['content_type'] == 'video'));
-$quiz_count = count(array_filter($curriculum, fn($item) => $item['content_type'] == 'quiz'));
-?>
-
-<!-- Redesigned Banner with Background Image -->
-<section class="overview-banner" style="background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('<?php echo htmlspecialchars($course['course_thumbnail']); ?>');">
-    <div class="container text-white">
-        <div class="row">
-            <div class="col-lg-8">
-                <a href="courses.php" class="text-white-50 text-decoration-none mb-2 d-inline-block"><i class="fas fa-arrow-left"></i> Back to Courses</a>
-                <h1 class="display-4 fw-bold"><?php echo htmlspecialchars($course['course_title']); ?></h1>
-                <p class="lead lead-sm"><?php echo htmlspecialchars(substr($course['course_description'], 0, 150)) . '...'; ?></p>
-                <p class="mb-2">Created by <a href="#" class="text-white fw-bold"><?php echo htmlspecialchars($course['instructor_name']); ?></a></p>
-                <div class="d-flex text-white-50 small">
-                    <span class="me-3"><i class="fas fa-play-circle me-1"></i> <?php echo $video_count; ?> Videos</span>
-                    <span class="me-3"><i class="fas fa-question-circle me-1"></i> <?php echo $quiz_count; ?> Quizzes</span>
-                    <span><i class="fas fa-users me-1"></i> <?php echo htmlspecialchars($course['enrollment_count']); ?> Students</span>
-                </div>
+<div class="container text-white">
+    <div class="row">
+        <div class="col-lg-8">
+            <a href="courses.php" class="text-white-50 text-decoration-none mb-2 d-inline-block"><i class="fas fa-arrow-left"></i> Back to Courses</a>
+            <h1 class="display-4 fw-bold"><?php echo htmlspecialchars($course['course_title']); ?></h1>
+            <p class="lead lead-sm"><?php echo htmlspecialchars(substr($course['course_description'], 0, 150)) . '...'; ?></p>
+            <p class="mb-2">Created by <a href="#" class="text-white fw-bold"><?php echo htmlspecialchars($course['instructor_name']); ?></a></p>
+            <div class="d-flex text-white-50 small">
+                <span class="me-3"><i class="fas fa-play-circle me-1"></i> <?php echo $video_count; ?> Videos</span>
+                <span class="me-3"><i class="fas fa-question-circle me-1"></i> <?php echo $quiz_count; ?> Quizzes</span>
+                <span><i class="fas fa-users me-1"></i> <?php echo htmlspecialchars($course['enrollment_count']); ?> Students</span>
             </div>
         </div>
     </div>
+</div>
 </section>
 
 <!-- Main Content Section -->
