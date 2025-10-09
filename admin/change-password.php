@@ -1,7 +1,16 @@
 <?php
 $pageTitle = "Change Password";
+
+
+
+
+
 require_once 'includes/auth-check.php';
+
+
 require_once 'includes/header.php';
+
+
 require_once '../config/database.php';
 
 

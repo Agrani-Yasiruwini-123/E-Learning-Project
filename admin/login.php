@@ -44,6 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 ?>
+<!-- Admin Login Page -->
 <!DOCTYPE html>
 <html lang="en">
 
