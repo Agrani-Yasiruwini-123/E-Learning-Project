@@ -213,6 +213,29 @@ $categories = $categories_result->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
+<!-- JavaScript to populate modals -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const id = button.dataset.id;
+      const name = button.dataset.name;
+      editModal.querySelector('#edit-category-id').value = id;
+      editModal.querySelector('#edit-category-name').value = name;
+    });
+
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const id = button.dataset.id;
+      const name = button.dataset.name;
+      deleteModal.querySelector('#delete-category-id').value = id;
+      deleteModal.querySelector('#delete-category-name').textContent = name;
+    });
+  });
+</script>
+
 <?php
 $conn->close();
 require 'includes/footer.php';
