@@ -143,6 +143,105 @@ $enrolled_courses = $stmt_courses->get_result()->fetch_all(MYSQLI_ASSOC);
     </div>
 </div>
 
+<!-- Chatbot Widget -->
+<div id="chatbot-container">
+  <div id="chatbot-header" onclick="toggleChat()">
+    💬 Chatbot
+  </div>
+  <div id="chatbot-body">
+    <div id="chatbot-messages"></div>
+    <input type="text" id="chatbot-input" placeholder="Type a message..." 
+           onkeypress="if(event.key==='Enter'){sendMessage()}">
+  </div>
+</div>
+
+<style>
+  #chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
+  }
+  #chatbot-header {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+  }
+  #chatbot-body {
+    display: none;
+    border: 1px solid #ccc;
+    background: white;
+    height: 350px;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  }
+  #chatbot-messages {
+    height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .message {
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 6px;
+    max-width: 80%;
+    clear: both;
+  }
+  .user {
+    background: #007bff;
+    color: white;
+    float: right;
+  }
+  .bot {
+    background: #f1f1f1;
+    float: left;
+  }
+  #chatbot-input {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    font-size: 14px;
+    outline: none;
+  }
+</style>
+
+<script>
+  function toggleChat() {
+    const body = document.getElementById("chatbot-body");
+    body.style.display = (body.style.display === "block") ? "none" : "block";
+  }
+
+  function sendMessage() {
+    const input = document.getElementById("chatbot-input");
+    const messages = document.getElementById("chatbot-messages");
+
+    if(input.value.trim() === "") return;
+
+    // Add user message
+    let userMsg = document.createElement("div");
+    userMsg.className = "message user";
+    userMsg.textContent = input.value;
+    messages.appendChild(userMsg);
+
+    // Add bot response (simple echo)
+    let botMsg = document.createElement("div");
+    botMsg.className = "message bot";
+    botMsg.textContent = "You said: " + input.value;
+    messages.appendChild(botMsg);
+
+    messages.scrollTop = messages.scrollHeight;
+    input.value = "";
+  }
+</script>
+
+
 <?php
 $stmt_user->close();
 $stmt_courses->close();
