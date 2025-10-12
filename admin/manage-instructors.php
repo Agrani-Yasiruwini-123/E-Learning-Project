@@ -231,35 +231,6 @@ $instructors = $instructors_result->fetch_all(MYSQLI_ASSOC);
   </div>
 </div>
 
-<!-- JavaScript to populate modals -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-
-    const editModal = document.getElementById('editModal');
-    editModal.addEventListener('show.bs.modal', function(event) {
-      const button = event.relatedTarget;
-      const id = button.dataset.id;
-      const username = button.dataset.username;
-      const email = button.dataset.email;
-
-      editModal.querySelector('#edit-user-id').value = id;
-      editModal.querySelector('#edit-username').value = username;
-      editModal.querySelector('#edit-email').value = email;
-      editModal.querySelector('#edit-password').value = '';
-    });
-
-
-    const deleteModal = document.getElementById('deleteModal');
-    deleteModal.addEventListener('show.bs.modal', function(event) {
-      const button = event.relatedTarget;
-      const id = button.dataset.id;
-      const username = button.dataset.username;
-
-      deleteModal.querySelector('#delete-user-id').value = id;
-      deleteModal.querySelector('#delete-username').textContent = username;
-    });
-  });
-</script>
 
 <?php
 $conn->close();

@@ -4,7 +4,7 @@ require 'includes/header.php';
 require 'includes/auth-check.php';
 require '../config/database.php';
 
-
+// Fetch statistics
 $total_users_result = $conn->query("SELECT COUNT(*) AS total FROM users WHERE role IN ('student', 'instructor')");
 $total_users = $total_users_result->fetch_assoc()['total'];
 
@@ -17,10 +17,10 @@ $total_enrollments = $total_enrollments_result->fetch_assoc()['total'];
 $new_users_result = $conn->query("SELECT COUNT(*) AS total FROM users WHERE registration_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)");
 $new_users = $new_users_result->fetch_assoc()['total'];
 
-
 $recent_users_result = $conn->query("SELECT username, email, registration_date FROM users WHERE role IN ('student', 'instructor') ORDER BY registration_date DESC LIMIT 5");
 $recent_users = $recent_users_result->fetch_all(MYSQLI_ASSOC);
 
+// Fetch recent enrollments
 $recent_enrollments_sql = "
     SELECT u.username, c.course_title, e.enrollment_date
     FROM enrollments e
