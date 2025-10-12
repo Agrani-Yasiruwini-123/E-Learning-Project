@@ -3,6 +3,7 @@ $pageTitle = "Add New Course";
 require 'includes/header.php';
 require '../config/database.php';
 
+
 $feedback_message = '';
 $feedback_class = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -13,50 +14,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $category = $_POST['category'] ?? '';
     $instructor_id = $_SESSION['user_id'];
     $course_thumbnail_db_path = 'assets/images/default-thumbnail.png';
-    
     if (isset($_FILES['course_thumbnail']) && $_FILES['course_thumbnail']['error'] == 0) {
       $target_dir_server = dirname(__DIR__) . '/assets/images/';
-      if (!is_dir($target_dir_server)) {
-        mkdir($target_dir_server, 0755, true);
-      }
       $file_name = uniqid() . '-' . basename($_FILES["course_thumbnail"]["name"]);
       $target_file_server = $target_dir_server . $file_name;
       if (move_uploaded_file($_FILES["course_thumbnail"]["tmp_name"], $target_file_server)) {
         $course_thumbnail_db_path = 'assets/images/' . $file_name;
       }
     }
-    
     $stmt = $conn->prepare("INSERT INTO courses (course_title, course_description, course_thumbnail, category, instructor_id) VALUES (?, ?, ?, ?, ?)");
     $stmt->bind_param("ssssi", $course_title, $course_description, $course_thumbnail_db_path, $category, $instructor_id);
     $stmt->execute();
     $course_id = $conn->insert_id;
     $stmt->close();
-    
     $content_types = $_POST['content_type'] ?? [];
     foreach ($content_types as $index => $type) {
       $order = $index + 1;
       $content_desc = $_POST['content_description'][$index] ?? null;
-      
       if ($type == 'video') {
         $title = $_POST['video_title'][$index];
         $url = $_POST['content_url'][$index];
         $stmt_content = $conn->prepare("INSERT INTO course_content (course_id, content_type, content_title, content_description, content_url, order_in_course) VALUES (?, 'video', ?, ?, ?, ?)");
         $stmt_content->bind_param("isssi", $course_id, $title, $content_desc, $url, $order);
         $stmt_content->execute();
-        $stmt_content->close();
       } elseif ($type == 'quiz') {
         $quiz_title = $_POST['quiz_title'][$index];
         $stmt_quiz = $conn->prepare("INSERT INTO quizzes (course_id, quiz_title) VALUES (?, ?)");
         $stmt_quiz->bind_param("is", $course_id, $quiz_title);
         $stmt_quiz->execute();
         $quiz_id = $conn->insert_id;
-        $stmt_quiz->close();
-        
         $stmt_content = $conn->prepare("INSERT INTO course_content (course_id, content_type, content_title, content_description, content_url, order_in_course) VALUES (?, 'quiz', ?, ?, ?, ?)");
         $stmt_content->bind_param("isssi", $course_id, $quiz_title, $content_desc, $quiz_id, $order);
         $stmt_content->execute();
-        $stmt_content->close();
-        
         if (isset($_POST['question_text'][$index])) {
           foreach ($_POST['question_text'][$index] as $q_index => $q_text) {
             $opt_a = $_POST['option_a'][$index][$q_index];
@@ -67,7 +56,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $stmt_q = $conn->prepare("INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt_q->bind_param("issssss", $quiz_id, $q_text, $opt_a, $opt_b, $opt_c, $opt_d, $correct);
             $stmt_q->execute();
-            $stmt_q->close();
           }
         }
       }
@@ -130,14 +118,13 @@ $categories = $conn->query("SELECT category_name FROM categories ORDER BY catego
     addContentBtn.addEventListener('click', function() {
       const newContentItem = document.createElement('div');
       newContentItem.classList.add('course-content-item', 'card', 'p-3', 'mb-3');
-      const index = courseContentSection.querySelectorAll('.course-content-item').length;
       newContentItem.innerHTML = `
             <div class="d-flex justify-content-end"><button type="button" class="btn-close remove-content-btn" title="Remove lesson"></button></div>
             <div class="mb-3"><label class="form-label">Lesson Type</label><select class="form-select content-type-select" name="content_type[]"><option value="video" selected>Video</option><option value="quiz">Quiz</option></select></div>
             <div class="mb-3"><label class="form-label">Lesson Description</label><textarea class="form-control" name="content_description[]" rows="2" placeholder="A brief summary..."></textarea></div>
             <div class="video-fields">
                 <div class="mb-3"><label class="form-label">Video Title</label><input type="text" class="form-control" name="video_title[]" required></div>
-                <div class="mb-3"><label class="form-label">YouTube URL</label><input type="url" class="form-control" name="content_url[]" placeholder="https://www.youtube.com/watch?v=..." required></div>
+                <div class="mb-3"><label class="form-label">YouTube URL</label><input type="url" class="form-control" name="content_url[]" placeholder="https:
             </div>
             <div class="quiz-fields" style="display: none;">
                 <div class="mb-3"><label class="form-label">Quiz Title</label><input type="text" class="form-control" name="quiz_title[]"></div>
@@ -178,8 +165,11 @@ $categories = $conn->query("SELECT category_name FROM categories ORDER BY catego
         const contentItem = event.target.closest('.course-content-item');
         const isVideo = event.target.value === 'video';
 
+
         contentItem.querySelector('.video-fields').style.display = isVideo ? 'block' : 'none';
         contentItem.querySelector('.quiz-fields').style.display = isVideo ? 'none' : 'block';
+
+
 
         contentItem.querySelectorAll('.video-fields input').forEach(input => input.required = isVideo);
         contentItem.querySelectorAll('.quiz-fields input[name^="quiz_title"]').forEach(input => input.required = !isVideo);
