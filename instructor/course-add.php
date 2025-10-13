@@ -1,184 +1,407 @@
-<?php
-$pageTitle = "Add New Course";
-require 'includes/header.php';
-require '../config/database.php';
-
-
-$feedback_message = '';
-$feedback_class = '';
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-  $conn->begin_transaction();
-  try {
-    $course_title = $_POST['course_title'] ?? '';
-    $course_description = $_POST['course_description'] ?? '';
-    $category = $_POST['category'] ?? '';
-    $instructor_id = $_SESSION['user_id'];
-    $course_thumbnail_db_path = 'assets/images/default-thumbnail.png';
-    if (isset($_FILES['course_thumbnail']) && $_FILES['course_thumbnail']['error'] == 0) {
-      $target_dir_server = dirname(__DIR__) . '/assets/images/';
-      $file_name = uniqid() . '-' . basename($_FILES["course_thumbnail"]["name"]);
-      $target_file_server = $target_dir_server . $file_name;
-      if (move_uploaded_file($_FILES["course_thumbnail"]["tmp_name"], $target_file_server)) {
-        $course_thumbnail_db_path = 'assets/images/' . $file_name;
-      }
-    }
-    $stmt = $conn->prepare("INSERT INTO courses (course_title, course_description, course_thumbnail, category, instructor_id) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssi", $course_title, $course_description, $course_thumbnail_db_path, $category, $instructor_id);
-    $stmt->execute();
-    $course_id = $conn->insert_id;
-    $stmt->close();
-    $content_types = $_POST['content_type'] ?? [];
-    foreach ($content_types as $index => $type) {
-      $order = $index + 1;
-      $content_desc = $_POST['content_description'][$index] ?? null;
-      if ($type == 'video') {
-        $title = $_POST['video_title'][$index];
-        $url = $_POST['content_url'][$index];
-        $stmt_content = $conn->prepare("INSERT INTO course_content (course_id, content_type, content_title, content_description, content_url, order_in_course) VALUES (?, 'video', ?, ?, ?, ?)");
-        $stmt_content->bind_param("isssi", $course_id, $title, $content_desc, $url, $order);
-        $stmt_content->execute();
-      } elseif ($type == 'quiz') {
-        $quiz_title = $_POST['quiz_title'][$index];
-        $stmt_quiz = $conn->prepare("INSERT INTO quizzes (course_id, quiz_title) VALUES (?, ?)");
-        $stmt_quiz->bind_param("is", $course_id, $quiz_title);
-        $stmt_quiz->execute();
-        $quiz_id = $conn->insert_id;
-        $stmt_content = $conn->prepare("INSERT INTO course_content (course_id, content_type, content_title, content_description, content_url, order_in_course) VALUES (?, 'quiz', ?, ?, ?, ?)");
-        $stmt_content->bind_param("isssi", $course_id, $quiz_title, $content_desc, $quiz_id, $order);
-        $stmt_content->execute();
-        if (isset($_POST['question_text'][$index])) {
-          foreach ($_POST['question_text'][$index] as $q_index => $q_text) {
-            $opt_a = $_POST['option_a'][$index][$q_index];
-            $opt_b = $_POST['option_b'][$index][$q_index];
-            $opt_c = $_POST['option_c'][$index][$q_index];
-            $opt_d = $_POST['option_d'][$index][$q_index];
-            $correct = $_POST['correct_option'][$index][$q_index];
-            $stmt_q = $conn->prepare("INSERT INTO quiz_questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt_q->bind_param("issssss", $quiz_id, $q_text, $opt_a, $opt_b, $opt_c, $opt_d, $correct);
-            $stmt_q->execute();
-          }
-        }
-      }
-    }
-    $conn->commit();
-    $feedback_message = "Course added successfully! <a href='dashboard.php'>Return to Dashboard</a>";
-    $feedback_class = 'alert-success';
-  } catch (Exception $e) {
-    $conn->rollback();
-    $feedback_message = "Error adding course: " . $e->getMessage();
-    $feedback_class = 'alert-danger';
-  }
-}
-$categories = $conn->query("SELECT category_name FROM categories ORDER BY category_name ASC")->fetch_all(MYSQLI_ASSOC);
-?>
 <div class="container-fluid">
-  <h1 class="h3 mb-4 text-gray-800">Add New Course</h1>
-  <?php if ($feedback_message) : ?>
-    <div class="alert <?php echo $feedback_class; ?> alert-dismissible fade show" role="alert"><?php echo $feedback_message; ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
-  <?php endif; ?>
-  <form action="course-add.php" method="POST" enctype="multipart/form-data">
-    <div class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Course Details</h6>
-      </div>
-      <div class="card-body">
-        <div class="mb-3"><label class="form-label">Course Title</label><input type="text" class="form-control" name="course_title" required></div>
-        <div class="mb-3"><label class="form-label">Course Description</label><textarea class="form-control" name="course_description" rows="4" required></textarea></div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label">Category</label>
-            <select class="form-select" name="category" required>
-              <option value="">Select a category...</option>
-              <?php foreach ($categories as $cat): ?><option value="<?php echo htmlspecialchars($cat['category_name']); ?>"><?php echo htmlspecialchars($cat['category_name']); ?></option><?php endforeach; ?>
-            </select>
-            <small class="form-text text-muted">Categories are managed by the site administrator.</small>
-          </div>
-          <div class="col-md-6 mb-3"><label class="form-label">Course Thumbnail</label><input type="file" class="form-control" name="course_thumbnail" accept="image/*"></div>
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Create New Course</h1>
+        <a href="dashboard.php" class="d-none d-sm-inline-block btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <?php if ($feedback_message) : ?>
+        <div class="alert <?php echo htmlspecialchars($feedback_class); ?> alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas <?php echo $feedback_class === 'alert-success' ? 'fa-check-circle' : ($feedback_class === 'alert-warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'); ?> me-2"></i>
+                <div><?php echo htmlspecialchars($feedback_message); ?></div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-      </div>
-    </div>
-    <div class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Course Content (Lessons)</h6>
-      </div>
-      <div class="card-body" id="course-content-section"></div>
-      <div class="card-footer"><button type="button" class="btn btn-secondary" id="add-content-btn"><i class="fas fa-plus"></i> Add Lesson</button></div>
-    </div>
-    <button type="submit" class="btn btn-primary btn-lg">Create Course</button>
-  </form>
+    <?php endif; ?>
+
+    <form action="course-add.php" method="POST" enctype="multipart/form-data" id="courseForm" novalidate>
+        <!-- Course Details Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle me-2"></i>Course Details
+                </h6>
+                <span class="badge bg-primary">Required</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="mb-4">
+                            <label for="course_title" class="form-label fw-semibold">Course Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg" id="course_title" name="course_title" 
+                                   placeholder="Enter an engaging course title" required maxlength="255">
+                            <div class="form-text">Make it descriptive and appealing to potential students.</div>
+                            <div class="invalid-feedback">Please provide a course title.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="course_description" class="form-label fw-semibold">Course Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="course_description" name="course_description" 
+                                      rows="5" placeholder="Describe what students will learn in this course..." required></textarea>
+                            <div class="form-text d-flex justify-content-between">
+                                <span>Be detailed about the learning outcomes.</span>
+                                <span id="description-counter">0/2000 characters</span>
+                            </div>
+                            <div class="invalid-feedback">Please provide a course description.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="mb-4">
+                            <label for="category" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Choose a category...</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo htmlspecialchars($cat['category_name']); ?>">
+                                        <?php echo htmlspecialchars($cat['category_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">Categories help students find your course.</div>
+                            <div class="invalid-feedback">Please select a category.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="course_thumbnail" class="form-label fw-semibold">Course Thumbnail</label>
+                            <div class="file-upload-area">
+                                <input type="file" class="form-control" id="course_thumbnail" name="course_thumbnail" 
+                                       accept="image/*" onchange="previewImage(this)">
+                                <div class="form-text">Recommended: 1280x720px, JPG or PNG, max 2MB</div>
+                                <div class="invalid-feedback">Please choose a valid image file.</div>
+                            </div>
+                            
+                            <div id="image-preview" class="mt-3 text-center d-none">
+                                <img id="preview" class="img-thumbnail" style="max-height: 200px; display: none;">
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeImage()">
+                                    <i class="fas fa-times me-1"></i>Remove Image
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="course_level" class="form-label fw-semibold">Difficulty Level</label>
+                            <select class="form-select" id="course_level" name="course_level">
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate" selected>Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                                <option value="All Levels">All Levels</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Content Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-play-circle me-2"></i>Course Content
+                </h6>
+                <span class="badge bg-info" id="lesson-count">0 Lessons</span>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>Add lessons to your course. Each lesson can be a video, article, or quiz.</div>
+                </div>
+
+                <div id="course-content-section" class="lessons-container">
+                    <!-- Lessons will be added here dynamically -->
+                    <div class="empty-state text-center py-5" id="empty-lessons">
+                        <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No lessons added yet</h5>
+                        <p class="text-muted">Start by adding your first lesson to the course.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <button type="button" class="btn btn-primary" id="add-lesson-btn">
+                    <i class="fas fa-plus me-2"></i>Add New Lesson
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="add-section-btn">
+                    <i class="fas fa-folder-plus me-2"></i>Add Section
+                </button>
+            </div>
+        </div>
+
+        <!-- Course Settings Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-cog me-2"></i>Course Settings
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="is_published" name="is_published" checked>
+                            <label class="form-check-label fw-semibold" for="is_published">
+                                Publish Course Immediately
+                            </label>
+                            <div class="form-text">If unchecked, the course will be saved as a draft.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="allow_enrollment" name="allow_enrollment" checked>
+                            <label class="form-check-label fw-semibold" for="allow_enrollment">
+                                Allow Student Enrollment
+                            </label>
+                            <div class="form-text">Students can enroll in this course.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="dashboard.php" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <div>
+                        <button type="submit" name="save_draft" class="btn btn-outline-primary me-2" value="draft">
+                            <i class="fas fa-save me-2"></i>Save as Draft
+                        </button>
+                        <button type="submit" name="create_course" class="btn btn-primary btn-lg px-4" value="publish">
+                            <i class="fas fa-rocket me-2"></i>Create Course
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
+<!-- Lesson Template (Hidden) -->
+<template id="lesson-template">
+    <div class="lesson-item card mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 lesson-title">New Lesson</h6>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-lesson-up">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary move-lesson-down">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-lesson">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label">Lesson Title</label>
+                        <input type="text" class="form-control lesson-title-input" name="lesson_titles[]" 
+                               placeholder="Enter lesson title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lesson Description</label>
+                        <textarea class="form-control" name="lesson_descriptions[]" 
+                                  rows="2" placeholder="Brief description of this lesson"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Lesson Type</label>
+                        <select class="form-select lesson-type" name="lesson_types[]" required>
+                            <option value="video">Video</option>
+                            <option value="article">Article</option>
+                            <option value="quiz">Quiz</option>
+                            <option value="assignment">Assignment</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content URL</label>
+                        <input type="url" class="form-control" name="lesson_urls[]" 
+                               placeholder="https://example.com/video">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" name="lesson_durations[]" 
+                               min="1" max="480" placeholder="e.g., 30">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const addContentBtn = document.getElementById('add-content-btn');
+document.addEventListener('DOMContentLoaded', function() {
+    let lessonCount = 0;
     const courseContentSection = document.getElementById('course-content-section');
+    const emptyLessons = document.getElementById('empty-lessons');
+    const lessonCountBadge = document.getElementById('lesson-count');
+    const lessonTemplate = document.getElementById('lesson-template');
+    const addLessonBtn = document.getElementById('add-lesson-btn');
+    const courseForm = document.getElementById('courseForm');
+    const descriptionTextarea = document.getElementById('course_description');
+    const descriptionCounter = document.getElementById('description-counter');
 
-    const getDynamicIndex = (element) => Array.from(courseContentSection.querySelectorAll('.course-content-item')).indexOf(element.closest('.course-content-item'));
-
-    addContentBtn.addEventListener('click', function() {
-      const newContentItem = document.createElement('div');
-      newContentItem.classList.add('course-content-item', 'card', 'p-3', 'mb-3');
-      newContentItem.innerHTML = `
-            <div class="d-flex justify-content-end"><button type="button" class="btn-close remove-content-btn" title="Remove lesson"></button></div>
-            <div class="mb-3"><label class="form-label">Lesson Type</label><select class="form-select content-type-select" name="content_type[]"><option value="video" selected>Video</option><option value="quiz">Quiz</option></select></div>
-            <div class="mb-3"><label class="form-label">Lesson Description</label><textarea class="form-control" name="content_description[]" rows="2" placeholder="A brief summary..."></textarea></div>
-            <div class="video-fields">
-                <div class="mb-3"><label class="form-label">Video Title</label><input type="text" class="form-control" name="video_title[]" required></div>
-                <div class="mb-3"><label class="form-label">YouTube URL</label><input type="url" class="form-control" name="content_url[]" placeholder="https:
-            </div>
-            <div class="quiz-fields" style="display: none;">
-                <div class="mb-3"><label class="form-label">Quiz Title</label><input type="text" class="form-control" name="quiz_title[]"></div>
-                <div class="quiz-questions-container border p-3 rounded"><h6>Questions</h6></div>
-                <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-question-btn">Add Question</button>
-            </div>
-        `;
-      courseContentSection.appendChild(newContentItem);
+    // Character counter for description
+    descriptionTextarea.addEventListener('input', function() {
+        const length = this.value.length;
+        descriptionCounter.textContent = `${length}/2000 characters`;
+        if (length > 2000) {
+            descriptionCounter.classList.add('text-danger');
+        } else {
+            descriptionCounter.classList.remove('text-danger');
+        }
     });
 
-    courseContentSection.addEventListener('click', function(event) {
-      if (event.target.classList.contains('remove-content-btn')) {
-        event.target.closest('.course-content-item').remove();
-      }
-      if (event.target.classList.contains('add-question-btn')) {
-        const cIndex = getDynamicIndex(event.target);
-        const questionsContainer = event.target.previousElementSibling;
-        const newQuestion = document.createElement('div');
-        newQuestion.classList.add('quiz-question', 'border-bottom', 'pb-2', 'mb-2');
-        newQuestion.innerHTML = `
-                <div class="d-flex justify-content-end"><button type="button" class="btn-close btn-sm remove-question-btn" title="Remove question"></button></div>
-                <div class="mb-2"><input type="text" class="form-control" name="question_text[${cIndex}][]" placeholder="Question Text" required></div>
-                <div class="input-group mb-1"><span class="input-group-text">A</span><input type="text" class="form-control" name="option_a[${cIndex}][]" placeholder="Option A" required></div>
-                <div class="input-group mb-1"><span class="input-group-text">B</span><input type="text" class="form-control" name="option_b[${cIndex}][]" placeholder="Option B" required></div>
-                <div class="input-group mb-1"><span class="input-group-text">C</span><input type="text" class="form-control" name="option_c[${cIndex}][]" placeholder="Option C" required></div>
-                <div class="input-group mb-1"><span class="input-group-text">D</span><input type="text" class="form-control" name="option_d[${cIndex}][]" placeholder="Option D" required></div>
-                <select class="form-select form-select-sm" name="correct_option[${cIndex}][]" required><option value="" selected disabled>Correct Answer</option><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select>
-            `;
-        questionsContainer.appendChild(newQuestion);
-      }
-      if (event.target.classList.contains('remove-question-btn')) {
-        event.target.closest('.quiz-question').remove();
-      }
+    // Add new lesson
+    addLessonBtn.addEventListener('click', function() {
+        addNewLesson();
     });
 
-    courseContentSection.addEventListener('change', function(event) {
-      if (event.target.classList.contains('content-type-select')) {
-        const contentItem = event.target.closest('.course-content-item');
-        const isVideo = event.target.value === 'video';
+    function addNewLesson() {
+        const lessonClone = lessonTemplate.content.cloneNode(true);
+        const lessonItem = lessonClone.querySelector('.lesson-item');
+        
+        lessonCount++;
+        updateLessonCount();
+        
+        if (emptyLessons) {
+            emptyLessons.style.display = 'none';
+        }
+        
+        // Add event listeners for the new lesson
+        const removeBtn = lessonItem.querySelector('.remove-lesson');
+        const moveUpBtn = lessonItem.querySelector('.move-lesson-up');
+        const moveDownBtn = lessonItem.querySelector('.move-lesson-down');
+        const titleInput = lessonItem.querySelector('.lesson-title-input');
+        
+        removeBtn.addEventListener('click', function() {
+            lessonItem.remove();
+            lessonCount--;
+            updateLessonCount();
+            if (lessonCount === 0 && emptyLessons) {
+                emptyLessons.style.display = 'block';
+            }
+        });
+        
+        moveUpBtn.addEventListener('click', function() {
+            const prev = lessonItem.previousElementSibling;
+            if (prev && prev.classList.contains('lesson-item')) {
+                courseContentSection.insertBefore(lessonItem, prev);
+            }
+        });
+        
+        moveDownBtn.addEventListener('click', function() {
+            const next = lessonItem.nextElementSibling;
+            if (next) {
+                courseContentSection.insertBefore(next, lessonItem);
+            }
+        });
+        
+        titleInput.addEventListener('input', function() {
+            const title = this.value || 'New Lesson';
+            lessonItem.querySelector('.lesson-title').textContent = title;
+        });
+        
+        courseContentSection.appendChild(lessonItem);
+    }
 
+    function updateLessonCount() {
+        lessonCountBadge.textContent = `${lessonCount} Lesson${lessonCount !== 1 ? 's' : ''}`;
+    }
 
-        contentItem.querySelector('.video-fields').style.display = isVideo ? 'block' : 'none';
-        contentItem.querySelector('.quiz-fields').style.display = isVideo ? 'none' : 'block';
-
-
-
-        contentItem.querySelectorAll('.video-fields input').forEach(input => input.required = isVideo);
-        contentItem.querySelectorAll('.quiz-fields input[name^="quiz_title"]').forEach(input => input.required = !isVideo);
-      }
+    // Form validation
+    courseForm.addEventListener('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        this.classList.add('was-validated');
     });
-  });
+
+    // Add a couple of empty lessons by default
+    addNewLesson();
+});
+
+function previewImage(input) {
+    const preview = document.getElementById('preview');
+    const imagePreview = document.getElementById('image-preview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            imagePreview.classList.remove('d-none');
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage() {
+    const input = document.getElementById('course_thumbnail');
+    const preview = document.getElementById('preview');
+    const imagePreview = document.getElementById('image-preview');
+    
+    input.value = '';
+    preview.style.display = 'none';
+    imagePreview.classList.add('d-none');
+}
 </script>
 
+<style>
+.lesson-item {
+    border-left: 4px solid #007bff;
+}
+
+.lesson-item .card-header {
+    cursor: move;
+}
+
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+}
+
+.empty-state {
+    color: #6c757d;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.lesson-item {
+    transition: transform 0.2s ease-in-out;
+}
+
+.lesson-item:hover {
+    transform: translateY(-2px);
+}
+</style>
+
 <?php
-$conn->close();
+if (isset($conn)) {
+    $conn->close();
+}
 require 'includes/footer.php';
 ?>
